@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuEditor Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #5D5CDE;
+            --secondary-color: #f8f9fa;
+            --text-color: #2c3e50;
+            --border-color: #e1e5e9;
+            --hover-color: #f1f3f4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 20px rgba(0,0,0,0.15);
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-right: 30px;
+        }
+
+        .document-title {
+            flex: 1;
+            max-width: 300px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .document-title:hover, .document-title:focus {
+            background: var(--hover-color);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        .collaborators {
+            display: flex;
+            align-items: center;
+            gap: -5px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            border: 2px solid var(--bg-primary);
+            margin-left: -5px;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar:hover {
+            transform: scale(1.1);
+            z-index: 2;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-secondary {
+            background: var(--hover-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--hover-color);
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-color);
+            transform: rotate(180deg);
+        }
+
+        /* Document Tabs */
+        .document-tabs {
+            position: fixed;
+            top: 60px; /* Below the header */
+            left: 0;
+            right: 0;
+            height: 40px; /* Height for tabs */
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000; /* Above toolbar */
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .document-tab {
+            padding: 8px 15px;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            background: var(--bg-secondary);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .document-tab:hover {
+            background: var(--hover-color);
+        }
+
+        .document-tab.active {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+            border-bottom-color: var(--bg-primary); /* Hide bottom border for active tab */
+            font-weight: 500;
+            color: var(--primary-color);
+            position: relative;
+            z-index: 1; /* Bring active tab to front */
+        }
+
+        .document-tab .close-tab {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .document-tab .close-tab:hover {
+            opacity: 1;
+            color: var(--danger-color);
+        }
+
+        .add-document-btn {
+            padding: 6px 12px;
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .add-document-btn:hover {
+            background: var(--hover-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            position: fixed;
+            top: 100px; /* Adjusted to be below tabs */
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 2px;
+            overflow-x: auto;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding-right: 15px;
+            margin-right: 15px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(93, 92, 222, 0.3);
+        }
+
+        .toolbar-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            position: relative;
+            padding-right: 30px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: none;
+            transition: all 0.3s ease;
+        }
+
+        .toolbar-select:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .toolbar-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.2);
+        }
+
+        .toolbar-select + .fas.fa-chevron-down {
+            position: absolute;
+            right: 10px;
+            pointer-events: none;
+            color: var(--text-color);
+            font-size: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .toolbar-select:hover + .fas.fa-chevron-down,
+        .toolbar-select:focus + .fas.fa-chevron-down {
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            margin-top: 150px; /* Adjusted to account for header + tabs + toolbar */
+            height: calc(100vh - 150px);
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            transition: margin-right 0.3s ease;
+        }
+
+        .editor-container.sidebar-open {
+            margin-right: 350px;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .editor {
+            max-width: 800px;
+            margin: 0 auto;
+            min-height: 600px;
+            background: var(--bg-primary);
+            padding: 60px 80px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            outline: none;
+            line-height: 1.15;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            background-image: 
+                linear-gradient(135deg, rgba(93, 92, 222, 0.05) 0%, transparent 50%),
+                linear-gradient(-45deg, rgba(93, 92, 222, 0.03) 0%, transparent 50%);
+        }
+
+        .editor:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.1);
+        }
+
+        .editor h1, .editor h2, .editor h3 {
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+        }
+
+        .editor p {
+            margin-bottom: 24px;
+        }
+
+        .editor ul, .editor ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .editor blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .editor a {
+            color: var(--primary-color);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .editor a:hover {
+            border-bottom-color: var(--primary-color);
+        }
+
+        /* Table Styles for Editor */
+        .editor table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .editor th, .editor td {
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 150px; /* Adjusted to be below header (60px) + tabs (40px) + toolbar (50px) */
+            right: -350px;
+            width: 350px;
+            height: calc(100vh - 150px); /* Adjusted height to match the new top value */
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            transition: right 0.3s ease;
+            z-index: 998;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .note-card {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .note-card.color-blue { border-left-color: #007bff; }
+        .note-card.color-green { border-left-color: #28a745; }
+        .note-card.color-yellow { border-left-color: #ffc107; }
+        .note-card.color-red { border-left-color: #dc3545; }
+        .note-card.color-purple { border-left-color: #6f42c1; }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .note-timestamp {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .note-action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .note-action-btn:hover {
+            background: var(--hover-color);
+        }
+
+        .note-content {
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        /* Search Panel */
+        .search-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-hover);
+            z-index: 1002;
+            display: none;
+            min-width: 300px;
+        }
+
+        .search-panel.active {
+            display: block;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .search-results {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .search-result:hover {
+            background: var(--hover-color);
+        }
+
+        .search-result.highlight {
+            background: rgba(93, 92, 222, 0.1);
+        }
+
+        /* Table Selector Panel Styles (New) */
+        .table-selector-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-hover);
+            z-index: 1003; /* Higher than search panel */
+            display: none;
+            min-width: 300px;
+        }
+
+        .table-selector-panel.active {
+            display: block;
+        }
+
+        .table-grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 25px); /* Max 10 columns */
+            grid-template-rows: repeat(10, 25px); /* Max 10 rows */
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .table-grid-cell {
+            width: 25px;
+            height: 25px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+
+        .table-grid-cell.highlighted {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .table-size-display {
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                font-size: 16px;
+                margin-right: 15px;
+            }
+            
+            .document-title {
+                max-width: 150px;
+            }
+            
+            .toolbar {
+                padding: 0 15px;
+                gap: 1px;
+            }
+            
+            .toolbar-group {
+                padding-right: 10px;
+                margin-right: 10px;
+            }
+            
+            .editor-wrapper {
+                padding: 20px 15px;
+            }
+            
+            .editor {
+                padding: 30px 20px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .editor-container.sidebar-open {
+                margin-right: 0;
+            }
+            
+            .stats-panel {
+                left: 15px;
+                bottom: 15px;
+                gap: 15px;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            margin-top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* 3D Texture Effects */
+        .editor::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(93, 92, 222, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(93, 92, 222, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(93, 92, 222, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            border-radius: 8px;
+        }
+
+        .note-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-file-alt"></i> DocuEditor Pro
+            </div>
+            
+            <input type="text" class="document-title" value="Untitled Document" placeholder="Document title">
+            
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <i class="fas fa-check-circle"></i>
+                    <span>All changes saved</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Document Tabs -->
+        <div class="document-tabs" id="documentTabs">
+            <!-- Tabs will be dynamically added here -->
+            <button class="add-document-btn" onclick="addDocument()">
+                <i class="fas fa-plus"></i> New Document
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Undo" onclick="execCommand('undo')">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Redo" onclick="execCommand('redo')">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <select class="toolbar-select" onchange="changeFontFamily(this.value)">
+                    <option value="Inter">Inter</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Georgia">Georgia</option>
+                </select>
+                <i class="fas fa-chevron-down" style="position: absolute; right: 8px; pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+            </div>
+            
+            <div class="toolbar-group">
+                <select class="toolbar-select" onchange="changeFontSize(this.value)">
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="32">32</option>
+                </select>
+                <i class="fas fa-chevron-down" style="position: absolute; right: 8px; pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Bold" onclick="toggleFormat('bold')">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Italic" onclick="toggleFormat('italic')">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Underline" onclick="toggleFormat('underline')">
+                    <i class="fas fa-underline"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Align Left" onclick="execCommand('justifyLeft')">
+                    <i class="fas fa-align-left"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Align Center" onclick="execCommand('justifyCenter')">
+                    <i class="fas fa-align-center"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Align Right" onclick="execCommand('justifyRight')">
+                    <i class="fas fa-align-right"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Justify" onclick="execCommand('justifyFull')">
+                    <i class="fas fa-align-justify"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Bullet List" onclick="execCommand('insertUnorderedList')">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Numbered List" onclick="execCommand('insertOrderedList')">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Insert Link" onclick="insertLink()">
+                    <i class="fas fa-link"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Insert Image" onclick="insertImage()">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Add Comment" onclick="addComment()">
+                    <i class="fas fa-comment"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Insert Table" onclick="insertTable()">
+                    <i class="fas fa-table"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Search" onclick="toggleSearch()">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Reference Notes" onclick="toggleSidebar()">
+                    <i class="fas fa-sticky-note"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn tooltip" data-tooltip="Export PDF" onclick="exportDocument('pdf')">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Export Word" onclick="exportDocument('docx')">
+                    <i class="fas fa-file-word"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="editor-container" id="editorContainer">
+                <div class="editor-wrapper">
+                    <div class="editor" contenteditable="true" id="editor">
+                        <h1>Welcome to DocuEditor Pro</h1>
+                        <p>Start typing your document here. This is a fully featured rich text editor with collaboration tools, reference notes, and professional formatting options.</p>
+                        <p>You can format text with <strong>bold</strong>, <em>italic</em>, and <u>underline</u> styles. Create lists, add links, and insert images seamlessly.</p>
+                        <ul>
+                            <li>Rich text formatting</li>
+                            <li>Collaborative editing</li>
+                            <li>Reference notes panel</li>
+                            <li>Auto-save functionality</li>
+                            <li>Export options</li>
+                        </ul>
+                        <p>Use the reference notes panel to keep track of important information and quickly insert notes into your document.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3 class="sidebar-title">Reference Notes</h3>
+                    <button class="toolbar-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="sidebar-content">
+                    <button class="btn btn-primary" onclick="showNoteInput()" style="width: 100%; margin-bottom: 20px;" id="addNoteButton">
+                        <i class="fas fa-plus"></i>
+                        Add New Note
+                    </button>
+                    
+                    <div id="noteInputContainer" style="display: none; margin-bottom: 20px;">
+                        <textarea id="noteInput" class="toolbar-select" style="width: 100%; min-height: 80px; margin-bottom: 10px; resize: vertical;" placeholder="Enter note content..."></textarea>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="saveNote()">Save Note</button>
+                            <button class="btn btn-secondary" onclick="cancelNoteEdit()">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div id="notesContainer">
+                        <!-- Notes will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Panel -->
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-value" id="wordCount">0</div>
+                <div class="stat-label">Words</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="charCount">0</div>
+                <div class="stat-label">Characters</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pageCount">1</div>
+                <div class="stat-label">Pages</div>
+            </div>
+        </div>
+
+        <!-- Search Panel -->
+        <div class="search-panel" id="searchPanel">
+            <h4 style="margin-bottom: 15px;">Find in Document</h4>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search for text..." oninput="performSearch(this.value)">
+            <div class="search-results" id="searchResults"></div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="toggleSearch()">Close</button>
+                <button class="btn btn-primary" onclick="replaceText()">Replace</button>
+            </div>
+        </div>
+
+        <!-- Table Selector Panel (New) -->
+        <div class="table-selector-panel" id="tableSelectorPanel">
+            <h4 style="margin-bottom: 15px;">Select Table Size</h4>
+            <div class="table-grid-container" id="tableGridContainer"></div>
+            <div class="table-size-display" id="tableSizeDisplay">0x0</div>
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="hideTableSelector()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let documents = []; // Array to store all document states
+        let activeDocumentId = null; // ID of the currently active document
+        let autoSaveInterval;
+        let editingNoteId = null; // To track which note is being edited
+        let lastSearchQuery = ''; // To store the last search query for clearing highlights later
+        let currentHighlightNodes = []; // To keep track of highlight nodes for efficient clearing
+        let notes = []; // Global notes array, ensure it's declared once
+        let editor; // Declare editor globally here
+        let savedSelection; // New: To store the current selection range
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            updateStats();
+            startAutoSave();
+            // loadSampleNotes(); // Sample notes will only load if no data is in localStorage
+        });
+
+        // Save and Load Application Data
+        function saveAppData() {
+            try {
+                localStorage.setItem('docuEditorDocuments', JSON.stringify(documents));
+                localStorage.setItem('docuEditorNotes', JSON.stringify(notes));
+                // console.log('App data saved successfully!');
+            } catch (e) {
+                console.error('Error saving data to localStorage:', e);
+            }
+        }
+
+        function loadAppData() {
+            try {
+                const savedDocuments = localStorage.getItem('docuEditorDocuments');
+                const savedNotes = localStorage.getItem('docuEditorNotes');
+
+                if (savedDocuments) {
+                    documents = JSON.parse(savedDocuments);
+                } else {
+                    // If no saved documents, create a default one
+                    const initialDocId = 'doc1';
+                    documents.push({
+                        id: initialDocId,
+                        title: 'Untitled Document',
+                        content: '<h1>Welcome to DocuEditor Pro</h1><p>Start typing your document here. This is a fully featured rich text editor with collaboration tools, reference notes, and professional formatting options.</p><p>You can format text with <strong>bold</strong>, <em>italic</em>, and <u>underline</u> styles. Create lists, add links, and insert images seamlessly.</p><ul><li>Rich text formatting</li><li>Collaborative editing</li><li>Reference notes panel</li><li>Auto-save functionality</li><li>Export options</li></ul><p>Use the reference notes panel to keep track of important information and quickly insert notes into your document.</p>',
+                        undoStack: [],
+                        redoStack: []
+                    });
+                    activeDocumentId = initialDocId;
+                }
+
+                if (savedNotes) {
+                    notes = JSON.parse(savedNotes);
+                } else {
+                    // If no saved notes, load sample notes
+                    loadSampleNotes();
+                }
+
+                // Set the active document
+                if (documents.length > 0) {
+                    activeDocumentId = documents[0].id; // Always set the first document as active on load
+                }
+
+            } catch (e) {
+                console.error('Error loading data from localStorage:', e);
+                // Fallback to initial state if loading fails
+                const initialDocId = 'doc1';
+                documents = [{
+                    id: initialDocId,
+                    title: 'Untitled Document',
+                    content: '<h1>Welcome to DocuEditor Pro</h1><p>Start typing your document here. This is a fully featured rich text editor with collaboration tools, reference notes, and professional formatting options.</p><p>You can format text with <strong>bold</strong>, <em>italic</em>, and <u>underline</u> styles. Create lists, add links, and insert images seamlessly.</p><ul><li>Rich text formatting</li><li>Collaborative editing</li><li>Reference notes panel</li><li>Auto-save functionality</li><li>Export options</li></ul><p>Use the reference notes panel to keep track of important information and quickly insert notes into your document.</p>',
+                    undoStack: [],
+                    redoStack: []
+                }];
+                activeDocumentId = initialDocId;
+                loadSampleNotes();
+            }
+        }
+
+        // Editor functionality
+        function execCommand(command, value = null) {
+            document.execCommand(command, false, value);
+            updateStats();
+            saveState();
+            updateToolbarStates(); // Ensure toolbar states are updated after command
+        }
+
+        function toggleFormat(format) {
+            // execCommand already handles active state via updateToolbarStates
+            execCommand(format);
+        }
+
+        function changeFontFamily(family) {
+            execCommand('fontName', family);
+        }
+
+        function changeFontSize(size) {
+            // The `fontSize` command uses 1-7 scale. Map the select values to this scale.
+            // For simplicity, directly using the value from the select, assuming they are 1-7 or map correctly.
+            // If the select uses pixel values (e.g., 16px), a mapping function would be needed.
+            // Current HTML uses 12, 14, 16 etc. which are not directly 1-7. Let's assume browser handles it.
+            // However, to be precise, contenteditable fontSize is 1-7. We need a mapping.
+            const fontSizeMap = {
+                '12': 1, '14': 2, '16': 3, '18': 4, '20': 5, '24': 6, '28': 7, '32': 7 // Max size is 7
+            };
+            execCommand('fontSize', fontSizeMap[size] || 3); // Default to 3 (16px) if not found
+        }
+
+        function insertLink() {
+            const url = prompt('Enter URL:');
+            if (url) {
+                execCommand('createLink', url);
+            }
+        }
+
+        function insertImage() {
+            const url = prompt('Enter image URL:');
+            if (url) {
+                execCommand('insertImage', url);
+            }
+        }
+
+        function insertTable() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                savedSelection = selection.getRangeAt(0); // Save the current selection
+            } else {
+                savedSelection = null;
+            }
+            showTableSelector();
+        }
+
+        function addComment() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+                
+                if (selectedText) {
+                    const comment = prompt('Add comment for: "' + selectedText + '"');
+                    if (comment) {
+                        const span = document.createElement('span');
+                        span.style.backgroundColor = 'rgba(93, 92, 222, 0.2)';
+                        span.style.position = 'relative';
+                        span.title = comment;
+                        span.className = 'comment-highlight';
+                        
+                        try {
+                            range.surroundContents(span);
+                        } catch (e) {
+                            span.textContent = selectedText;
+                            range.deleteContents();
+                            range.insertNode(span);
+                        }
+                        
+                        selection.removeAllRanges();
+                        saveState(); // Save state after adding comment
+                    }
+                } else {
+                    alert('Please select text to comment on.');
+                }
+            }
+        }
+
+        // Renamed handlePaste to handleEditorPaste for clarity and consistency
+        function handleEditorPaste(event) {
+            event.preventDefault();
+            const pastedText = (event.clipboardData || window.clipboardData).getData('text/plain');
+            const pastedHtml = (event.clipboardData || window.clipboardData).getData('text/html');
+            
+            // Regex to check for a URL (simple check)
+            const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/i;
+
+            if (pastedText && urlRegex.test(pastedText)) {
+                const linkTitle = prompt('Enter title for the link (optional):', pastedText);
+                if (linkTitle) {
+                    document.execCommand('insertHTML', false, `<a href="${pastedText}">${linkTitle}</a>`);
+                } else {
+                    document.execCommand('insertHTML', false, pastedText); // Insert as plain text if no title
+                }
+            } else if (pastedHtml) {
+                document.execCommand('insertHTML', false, pastedHtml);
+            } else if (pastedText) {
+                document.execCommand('insertHTML', false, pastedText);
+            }
+            updateStats();
+            saveState(); // Save state after paste
+        }
+
+        // New function to handle keydown events, specifically for Enter/Shift+Enter
+        function handleEditorKeydown(event) {
+            if (event.key === 'Enter') {
+                if (event.shiftKey) {
+                    event.preventDefault(); // Prevent default new paragraph
+                    execCommand('insertHTML', '<br>'); // Insert a line break
+                }
+                // If not Shift+Enter, allow default behavior (new paragraph)
+                updateStats();
+                saveState();
+            }
+        }
+
+        // Sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const editorContainer = document.getElementById('editorContainer');
+            
+            sidebar.classList.toggle('open');
+            editorContainer.classList.toggle('sidebar-open');
+        }
+
+        // Notes functionality
+        function showNoteInput(noteId = null) {
+            const noteInputContainer = document.getElementById('noteInputContainer');
+            const noteInput = document.getElementById('noteInput');
+            const addNoteButton = document.getElementById('addNoteButton');
+
+            addNoteButton.style.display = 'none'; // Hide the "Add New Note" button
+
+            noteInputContainer.style.display = 'block';
+            editingNoteId = noteId;
+
+            if (noteId !== null) {
+                const note = notes.find(n => n.id === noteId);
+                if (note) {
+                    noteInput.value = note.content;
+                }
+            } else {
+                noteInput.value = '';
+            }
+            noteInput.focus();
+        }
+
+        function cancelNoteEdit() {
+            const noteInputContainer = document.getElementById('noteInputContainer');
+            const noteInput = document.getElementById('noteInput');
+            const addNoteButton = document.getElementById('addNoteButton');
+
+            noteInputContainer.style.display = 'none';
+            noteInput.value = '';
+            editingNoteId = null;
+            addNoteButton.style.display = 'block'; // Show the "Add New Note" button again
+        }
+
+        function saveNote() {
+            const noteInput = document.getElementById('noteInput');
+            const noteContent = noteInput.value.trim();
+
+            if (!noteContent) {
+                alert('Note content cannot be empty.');
+                return;
+            }
+
+            if (editingNoteId) {
+                // Edit existing note
+                const note = notes.find(n => n.id === editingNoteId);
+                if (note) {
+                    note.content = noteContent;
+                    note.timestamp = new Date().toLocaleString();
+                }
+            } else {
+                // Add new note
+            const colors = ['blue', 'green', 'yellow', 'red', 'purple'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+                const newNote = {
+                    id: Date.now(),
+                    content: noteContent,
+                    color: randomColor,
+                    timestamp: new Date().toLocaleString()
+                };
+                notes.unshift(newNote); // Add to the beginning so latest note is on top
+            }
+                
+                renderNotes();
+            cancelNoteEdit();
+            saveAppData(); // Save notes after adding/editing
+        }
+
+        function editNote(id) {
+            showNoteInput(id);
+        }
+
+        function deleteNote(id) {
+            if (confirm('Delete this note?')) {
+                notes = notes.filter(n => n.id !== id);
+                renderNotes();
+                saveAppData(); // Save notes after deleting
+            }
+        }
+
+        function insertNoteContent(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                const editor = document.getElementById('editor');
+                editor.focus();
+                // Insert as a blockquote for better visual distinction as a note
+                document.execCommand('insertHTML', false, `<blockquote><em>Note: ${note.content}</em></blockquote><br>`);
+                updateStats();
+                saveState(); // Save state after inserting note
+            }
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = '';
+            
+            notes.forEach(note => {
+                const noteCard = document.createElement('div');
+                noteCard.className = `note-card color-${note.color} fade-in`;
+                noteCard.setAttribute('data-note-id', note.id); // Add data attribute for easier identification
+                noteCard.innerHTML = `
+                    <div class="note-header">
+                        <div class="note-timestamp">${note.timestamp}</div>
+                        <div class="note-actions">
+                            <button class="note-action-btn tooltip" data-tooltip="Insert" onclick="insertNoteContent(${note.id})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="note-action-btn tooltip" data-tooltip="Edit" onclick="editNote(${note.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="note-action-btn tooltip" data-tooltip="Delete" onclick="deleteNote(${note.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="note-content">${note.content}</div>
+                `;
+                container.appendChild(noteCard);
+            });
+        }
+
+        function loadSampleNotes() {
+            notes = [
+                {
+                    id: 1,
+                    content: "Remember to include sources for all statistics mentioned in the report.",
+                    color: "blue",
+                    timestamp: new Date().toLocaleString()
+                },
+                {
+                    id: 2,
+                    content: "Key deadline: Project submission due next Friday at 5 PM.",
+                    color: "red",
+                    timestamp: new Date().toLocaleString()
+                },
+                {
+                    id: 3,
+                    content: "Great quote: 'Innovation distinguishes between a leader and a follower.' - Steve Jobs",
+                    color: "green",
+                    timestamp: new Date().toLocaleString()
+                }
+            ];
+            renderNotes();
+        }
+
+        // Search functionality
+        function toggleSearch() {
+            const searchPanel = document.getElementById('searchPanel');
+            searchPanel.classList.toggle('active');
+            
+            if (searchPanel.classList.contains('active')) {
+                document.getElementById('searchInput').focus();
+                // Clear previous highlights and search results when opening
+                clearEditorHighlights();
+                document.getElementById('searchResults').innerHTML = '';
+                document.getElementById('searchInput').value = '';
+            } else {
+                // Clear highlights when closing
+                clearEditorHighlights();
+            }
+        }
+
+        function performSearch(query) {
+            const editor = document.getElementById('editor');
+            const resultsContainer = document.getElementById('searchResults');
+            
+            clearEditorHighlights(); // Clear previous highlights before new search
+            
+            if (!query) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            let matchesCount = 0;
+            const textNodes = [];
+
+            // Collect all text nodes
+            function collectTextNodes(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    textNodes.push(node);
+                } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE' && node.contentEditable !== 'false') {
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        collectTextNodes(node.childNodes[i]);
+                    }
+                }
+            }
+            collectTextNodes(editor);
+
+            currentHighlightNodes = []; // Reset current highlights
+            const regex = new RegExp(query, 'gi');
+
+            textNodes.forEach(textNode => {
+                const text = textNode.nodeValue;
+                let lastIndex = 0;
+                let match;
+
+                while ((match = regex.exec(text)) !== null) {
+                    matchesCount++;
+                    const startIndex = match.index;
+                    const endIndex = match.index + match[0].length;
+
+                    // Split the text node into three parts: before match, match, after match
+                    const before = document.createTextNode(text.substring(lastIndex, startIndex));
+                    const highlighted = document.createElement('mark');
+                    highlighted.style.backgroundColor = 'rgba(93, 92, 222, 0.3)';
+                    highlighted.className = 'search-highlight';
+                    highlighted.textContent = text.substring(startIndex, endIndex);
+                    currentHighlightNodes.push(highlighted); // Store the highlighted node
+
+                    const after = document.createTextNode(text.substring(endIndex));
+
+                    // Replace the original text node with the new structure
+                    const parent = textNode.parentNode;
+                    if (parent) {
+                        parent.insertBefore(before, textNode);
+                        parent.insertBefore(highlighted, textNode);
+                        parent.insertBefore(after, textNode);
+                        parent.removeChild(textNode);
+                    }
+                    lastIndex = endIndex;
+                    // Reset regex lastIndex to continue search from after the highlighted part in the original text.
+                    // This is crucial for correct subsequent matches within the same node.
+                    regex.lastIndex = startIndex + match[0].length;
+                }
+            });
+
+
+            if (matchesCount > 0) {
+                resultsContainer.innerHTML = `<div class="search-result highlight">Found ${matchesCount} matches</div>`;
+            } else {
+                resultsContainer.innerHTML = '<div class="search-result">No matches found</div>';
+            }
+        }
+
+        function clearEditorHighlights() {
+            currentHighlightNodes.forEach(mark => {
+                const parent = mark.parentNode;
+                if (parent) {
+                    while (mark.firstChild) {
+                        parent.insertBefore(mark.firstChild, mark);
+                    }
+                    parent.removeChild(mark);
+                    parent.normalize(); // Clean up merged text nodes
+                }
+            });
+            currentHighlightNodes = []; // Clear the stored nodes
+        }
+
+        function replaceText() {
+            const query = document.getElementById('searchInput').value;
+            const replacement = prompt('Replace with:');
+            
+            if (query && replacement !== null) { // Check for null as prompt returns null on cancel
+                const editor = document.getElementById('editor');
+                clearEditorHighlights(); // Clear highlights before replacing to ensure clean text
+
+                // Get current text content to avoid issues with existing HTML structure
+                let editorContent = editor.innerHTML; 
+                const regex = new RegExp(query, 'gi');
+                editor.innerHTML = editorContent.replace(regex, replacement);
+
+                updateStats();
+                saveState();
+                toggleSearch(); // Close search panel after replace
+            }
+        }
+
+        // Table Selection Functionality (New)
+        function showTableSelector() {
+            const tableSelectorPanel = document.getElementById('tableSelectorPanel');
+            const tableGridContainer = document.getElementById('tableGridContainer');
+            const tableSizeDisplay = document.getElementById('tableSizeDisplay');
+            
+            tableGridContainer.innerHTML = ''; // Clear previous grid
+
+            const maxRows = 10;
+            const maxCols = 10;
+
+            for (let r = 1; r <= maxRows; r++) {
+                for (let c = 1; c <= maxCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'table-grid-cell';
+                    cell.dataset.rows = r;
+                    cell.dataset.cols = c;
+                    cell.addEventListener('mouseover', highlightTableCells);
+                    cell.addEventListener('click', selectAndInsertTable);
+                    tableGridContainer.appendChild(cell);
+                }
+            }
+
+            tableSizeDisplay.textContent = '0x0'; // Reset display
+            tableSelectorPanel.classList.add('active');
+        }
+
+        function hideTableSelector() {
+            const tableSelectorPanel = document.getElementById('tableSelectorPanel');
+            tableSelectorPanel.classList.remove('active');
+            clearTableHighlights();
+        }
+
+        function highlightTableCells(event) {
+            const hoveredCell = event.target;
+            const selectedRows = parseInt(hoveredCell.dataset.rows, 10);
+            const selectedCols = parseInt(hoveredCell.dataset.cols, 10);
+            const tableGridContainer = document.getElementById('tableGridContainer');
+            const tableSizeDisplay = document.getElementById('tableSizeDisplay');
+
+            clearTableHighlights(); // Clear previous highlights
+
+            const cells = tableGridContainer.querySelectorAll('.table-grid-cell');
+            cells.forEach(cell => {
+                const cellRows = parseInt(cell.dataset.rows, 10);
+                const cellCols = parseInt(cell.dataset.cols, 10);
+                if (cellRows <= selectedRows && cellCols <= selectedCols) {
+                    cell.classList.add('highlighted');
+                }
+            });
+            tableSizeDisplay.textContent = `${selectedRows}x${selectedCols}`;
+        }
+
+        function clearTableHighlights() {
+            const tableGridContainer = document.getElementById('tableGridContainer');
+            const cells = tableGridContainer.querySelectorAll('.table-grid-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('highlighted');
+            });
+        }
+
+        function selectAndInsertTable(event) {
+            const selectedCell = event.target;
+            const rows = parseInt(selectedCell.dataset.rows, 10);
+            const cols = parseInt(selectedCell.dataset.cols, 10);
+            
+            hideTableSelector(); // Close the selector
+            createAndInsertTable(rows, cols);
+        }
+
+        function createAndInsertTable(rows, cols) {
+            let tableHtml = '<table border="1" style="width:100%; border-collapse: collapse; margin: 15px 0;"><tbody>';
+            for (let i = 0; i < rows; i++) {
+                tableHtml += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    // Add a placeholder for empty cells for better user experience
+                    tableHtml += '<td style="padding: 8px; border: 1px solid var(--border-color);">&nbsp;</td>'; 
+                }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody></table><p>&nbsp;</p>'; // Add a paragraph after the table for easier typing below
+
+            editor.focus(); // Ensure editor is focused
+
+            const selection = window.getSelection();
+            let range = savedSelection; // Start with the saved selection
+
+            // If saved selection is null or its start container is not part of the document anymore,
+            // or if the editor element itself is not the parent of the selection,
+            // create a new range at the end of the editor.
+            if (!range || !document.body.contains(range.startContainer) || !editor.contains(range.startContainer)) {
+                range = document.createRange();
+                range.selectNodeContents(editor);
+                range.collapse(false); // Collapse to the end
+            }
+
+            selection.removeAllRanges();
+            selection.addRange(range); // Set the active selection to our determined range
+
+            // Now insert the HTML
+            const docFragment = range.createContextualFragment(tableHtml);
+            range.deleteContents(); // Clear any selected content before inserting
+            range.insertNode(docFragment);
+
+            // Move cursor after the inserted table for continued typing
+            range.collapseToEnd();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            savedSelection = null; // Clear saved selection after use
+            updateStats(); // Update stats after content change
+            saveState(); // Save state after content change
+        }
+
+        // Stats functionality
+        function updateStats() {
+            const editor = document.getElementById('editor');
+            const text = editor.textContent || editor.innerText || '';
+            
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const characters = text.length;
+            const pages = Math.max(1, Math.ceil(words / 250)); // Approximate 250 words per page
+            
+            document.getElementById('wordCount').textContent = words;
+            document.getElementById('charCount').textContent = characters;
+            document.getElementById('pageCount').textContent = pages;
+        }
+
+        // Export functionality
+        function exportDocument(format) {
+            const editor = document.getElementById('editor');
+            const title = document.querySelector('.document-title').value || 'document';
+            const content = editor.innerHTML;
+            
+            if (format === 'pdf') {
+                // Simulate PDF export
+                alert('PDF export functionality would integrate with a service like jsPDF or server-side PDF generation.');
+            } else if (format === 'docx') {
+                // Simulate Word export
+                const blob = new Blob([`
+                    <html>
+                        <head>
+                            <meta charset="utf-8">
+                            <title>${title}</title>
+                        </head>
+                        <body>
+                            ${content}
+                        </body>
+                    </html>
+                `], {type: 'application/msword'});
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.doc`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        }
+
+        // Auto-save functionality
+        function startAutoSave() {
+            clearInterval(autoSaveInterval); // Clear any existing interval
+            autoSaveInterval = setInterval(() => {
+                // Simulate auto-save
+                const statusIndicator = document.querySelector('.status-indicator');
+                statusIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>All changes saved</span>';
+                statusIndicator.classList.add('pulse'); // Keep pulse, but perhaps less aggressive CSS is needed
+                
+                setTimeout(() => {
+                    statusIndicator.classList.remove('pulse');
+                }, 1000);
+                saveAppData(); // Save data on auto-save
+            }, 10000); // Auto-save every 10 seconds
+        }
+
+        // Undo/Redo functionality
+        function saveState() {
+            const editor = document.getElementById('editor');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+            if (activeDoc) {
+                // Only save if the content has changed to avoid duplicate states
+                if (activeDoc.undoStack.length === 0 || activeDoc.undoStack[activeDoc.undoStack.length - 1] !== editor.innerHTML) {
+                    activeDoc.undoStack.push(editor.innerHTML);
+                    activeDoc.redoStack = []; // Clear redo stack when new action is performed
+                }
+                
+                // Limit undo stack size
+                if (activeDoc.undoStack.length > 50) {
+                    activeDoc.undoStack.shift();
+                }
+                activeDoc.content = editor.innerHTML; // Update content of active document
+                saveAppData(); // Persist changes to local storage
+            }
+        }
+
+        function undo() {
+            const editor = document.getElementById('editor');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+            if (activeDoc && activeDoc.undoStack.length > 1) { // Ensure there's a state to undo to
+                activeDoc.redoStack.push(activeDoc.undoStack.pop());
+                editor.innerHTML = activeDoc.undoStack[activeDoc.undoStack.length - 1];
+                updateStats();
+                updateToolbarStates(); // Update toolbar after undo
+                activeDoc.content = editor.innerHTML; // Update content after undo
+                saveAppData(); // Persist changes to local storage
+            }
+        }
+
+        function redo() {
+            const editor = document.getElementById('editor');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+            if (activeDoc && activeDoc.redoStack.length > 0) {
+                const state = activeDoc.redoStack.pop();
+                activeDoc.undoStack.push(state);
+                editor.innerHTML = state;
+                updateStats();
+                updateToolbarStates(); // Update toolbar after redo
+                activeDoc.content = editor.innerHTML; // Update content after redo
+                saveAppData(); // Persist changes to local storage
+            }
+        }
+
+        // Document tab functionality
+        function addDocument() {
+            saveState(); // Save current document before adding a new one
+            const newDocId = `doc${Date.now()}`;
+            const newDocument = {
+                id: newDocId,
+                title: `Untitled Document ${documents.length + 1}`,
+                content: '<h1>New Document</h1><p>Start typing your new document here.</p>',
+                undoStack: [],
+                redoStack: []
+            };
+            documents.push(newDocument);
+            switchDocument(newDocId);
+            renderTabs();
+            saveAppData(); // Save new document
+        }
+
+        function switchDocument(id) {
+            saveState(); // Save changes to the previously active document
+            activeDocumentId = id;
+            const editor = document.getElementById('editor');
+            const documentTitleInput = document.querySelector('.document-title');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+
+            if (activeDoc) {
+                editor.innerHTML = activeDoc.content;
+                documentTitleInput.value = activeDoc.title;
+                // Initialize undo/redo for the new document if it's empty
+                if (activeDoc.undoStack.length === 0) {
+                    activeDoc.undoStack.push(activeDoc.content);
+                }
+                activeDoc.redoStack = []; // Clear redo when switching
+                updateStats();
+                updateToolbarStates();
+            }
+            renderTabs(); // Re-render tabs to update active state
+            saveAppData(); // Save app data after switching document
+        }
+
+        function deleteDocument(id) {
+            if (documents.length === 1) {
+                alert('Cannot delete the last document.');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this document?')) {
+                const deletedDocIndex = documents.findIndex(doc => doc.id === id);
+                documents.splice(deletedDocIndex, 1); // Remove the document
+
+                if (activeDocumentId === id) {
+                    // If deleted document was active, switch to the first available document
+                    switchDocument(documents[0].id);
+                } else {
+                    renderTabs(); // Just re-render if active document wasn't deleted
+                    saveAppData(); // Save data after deleting a document
+                }
+            }
+        }
+
+        function updateDocumentTitle() {
+            const documentTitleInput = document.querySelector('.document-title');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+            if (activeDoc) {
+                activeDoc.title = documentTitleInput.value;
+                renderTabs(); // Update tab title in UI
+                saveAppData(); // Save data after title change
+            }
+        }
+
+        function renderTabs() {
+            const tabContainer = document.getElementById('documentTabs');
+            // Keep the "New Document" button separate at the end
+            const newDocumentButton = tabContainer.querySelector('.add-document-btn');
+            tabContainer.innerHTML = ''; // Clear existing tabs
+
+            documents.forEach(doc => {
+                const tab = document.createElement('div');
+                tab.className = `document-tab ${doc.id === activeDocumentId ? 'active' : ''}`;
+                tab.setAttribute('data-doc-id', doc.id);
+                tab.innerHTML = `
+                    <span>${doc.title}</span>
+                    <button class="close-tab" onclick="event.stopPropagation(); deleteDocument('${doc.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                tab.onclick = () => switchDocument(doc.id);
+                tabContainer.appendChild(tab);
+            });
+            tabContainer.appendChild(newDocumentButton); // Add button back
+        }
+
+        // Initialize app
+        function initializeApp() {
+            loadAppData(); // Load data first
+
+            // Set the editor content and title based on the active document
+            editor = document.getElementById('editor'); 
+            const documentTitleInput = document.querySelector('.document-title');
+            const activeDoc = documents.find(doc => doc.id === activeDocumentId);
+
+            if (activeDoc) {
+                editor.innerHTML = activeDoc.content;
+                documentTitleInput.value = activeDoc.title;
+            }
+            
+            document.querySelector('.document-title').addEventListener('input', updateDocumentTitle); // Listen for title changes
+            renderTabs(); // Render tabs based on loaded documents
+            
+            // Add editor specific event listeners
+            editor.addEventListener('paste', handleEditorPaste); // Use the renamed paste handler
+            editor.addEventListener('keyup', updateStats); // Update stats on keyup
+            editor.addEventListener('keydown', handleEditorKeydown); // Handle Enter/Shift+Enter
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            toggleFormat('bold');
+                            break;
+                        case 'i':
+                            e.preventDefault();
+                            toggleFormat('italic');
+                            break;
+                        case 'u':
+                            e.preventDefault();
+                            toggleFormat('underline');
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            toggleSearch();
+                            break;
+                        case 'z':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                redo();
+                            } else {
+                                undo();
+                            }
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            // Trigger manual save
+                            const statusIndicator = document.querySelector('.status-indicator');
+                            statusIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Document saved</span>';
+                            statusIndicator.classList.add('pulse');
+                            setTimeout(() => {
+                                statusIndicator.classList.remove('pulse');
+                            }, 1000);
+                            saveState(); // Manual save on Ctrl+S
+                            break;
+                    }
+                }
+                
+                if (e.key === 'Escape') {
+                    const searchPanel = document.getElementById('searchPanel');
+                    const noteInputContainer = document.getElementById('noteInputContainer'); // New: check note input
+                    if (searchPanel.classList.contains('active')) {
+                        toggleSearch();
+                    } else if (noteInputContainer.style.display === 'block') { // New: hide note input on escape
+                        cancelNoteEdit();
+                    }
+                }
+            });
+            
+            // Update toolbar button states based on selection
+            document.addEventListener('selectionchange', function() {
+                updateToolbarStates();
+            });
+            
+            console.log('DocuEditor Pro initialized successfully!');
+        }
+
+        function updateToolbarStates() {
+            // Commands for which we check active state
+            const commands = ['bold', 'italic', 'underline', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'insertUnorderedList', 'insertOrderedList']; 
+            commands.forEach(command => {
+                const btn = document.querySelector(`[onclick*="execCommand('${command}')"], [onclick*="toggleFormat('${command}')"]`);
+                if (btn) {
+                    if (document.queryCommandState(command)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+
+            // Update font family select
+            const fontFamilySelect = document.querySelector('.toolbar-select[onchange*="changeFontFamily"]');
+            if (fontFamilySelect) {
+                const currentFont = document.queryCommandValue('fontName').replace(/"/g, ''); 
+                let foundFont = false;
+                for (let i = 0; i < fontFamilySelect.options.length; i++) {
+                    if (fontFamilySelect.options[i].value.toLowerCase() === currentFont.toLowerCase()) {
+                        fontFamilySelect.value = fontFamilySelect.options[i].value;
+                        foundFont = true;
+                        break;
+                    }
+                }
+                if (!foundFont) {
+                    fontFamilySelect.value = fontFamilySelect.options[0].value; // Default to first option
+                }
+            }
+
+            // Update font size select
+            const fontSizeSelect = document.querySelector('.toolbar-select[onchange*="changeFontSize"]');
+            if (fontSizeSelect) {
+                const currentSize = document.queryCommandValue('fontSize'); // Returns 1-7 for sizes
+                // Map browser default font sizes (1-7) to actual pixel sizes or dropdown values
+                const reverseFontSizeMap = {
+                    '1': '12', '2': '14', '3': '16', '4': '18', '5': '20', '6': '24', '7': '28' // Assuming '32' is also size 7
+                };
+                let mappedSize = reverseFontSizeMap[currentSize];
+
+                let foundSize = false;
+                for (let i = 0; i < fontSizeSelect.options.length; i++) {
+                    if (fontSizeSelect.options[i].value === mappedSize) {
+                        fontSizeSelect.value = fontSizeSelect.options[i].value;
+                        foundSize = true;
+                        break;
+                    }
+                }
+                if (!foundSize) {
+                    fontSizeSelect.value = '16'; // Default to 16 if current size isn't mapped or found
+                }
+            }
+        }
+
+        // Click outside to close search panel and note input
+        document.addEventListener('click', function(e) {
+            const searchPanel = document.getElementById('searchPanel');
+            const searchBtn = document.querySelector('[onclick="toggleSearch()"]');
+            
+            if (searchPanel.classList.contains('active') && 
+                !searchPanel.contains(e.target) && 
+                !searchBtn.contains(e.target)) {
+                toggleSearch();
+            }
+
+            const noteInputContainer = document.getElementById('noteInputContainer');
+            const addNoteButton = document.getElementById('addNoteButton');
+            // Select all note-related buttons for click-outside logic
+            const noteRelatedButtons = document.querySelectorAll('.sidebar .btn, .note-action-btn'); 
+
+            let clickedOnNoteRelatedElement = false;
+            noteRelatedButtons.forEach(btn => {
+                if (e.target === btn || btn.contains(e.target)) {
+                    clickedOnNoteRelatedElement = true;
+                }
+            });
+
+            if (noteInputContainer.style.display === 'block' && 
+                !noteInputContainer.contains(e.target) && 
+                !clickedOnNoteRelatedElement) {
+                cancelNoteEdit();
+            }
+        });
+    </script>
+</body>
+</html>
