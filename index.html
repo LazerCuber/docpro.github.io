@@ -192,6 +192,19 @@
             padding: 0 10px;
             overflow-x: auto;
             white-space: nowrap;
+            max-height: 40px;
+            opacity: 1;
+            transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+            overflow: hidden;
+            will-change: max-height, opacity;
+            margin-bottom: 0;
+        }
+
+        .document-tabs.collapsed {
+            max-height: 0;
+            opacity: 0;
+            pointer-events: none;
+            /* margin-bottom: 0; // Uncomment if you have margin issues */
         }
 
         .document-tab {
@@ -260,7 +273,7 @@
         /* Toolbar */
         .toolbar {
             position: fixed;
-            top: 100px; /* Adjusted to be below tabs */
+            top: 100px;
             left: 0;
             right: 0;
             height: 50px;
@@ -272,6 +285,10 @@
             padding: 0 20px;
             gap: 2px;
             overflow-x: auto;
+            transition: top 0.3s cubic-bezier(.4,0,.2,1);
+        }
+        body.tabs-hidden .toolbar {
+            top: 60px;
         }
 
         .toolbar-group {
@@ -359,8 +376,13 @@
         .main-content {
             flex: 1;
             display: flex;
-            margin-top: 150px; /* Adjusted to account for header + tabs + toolbar */
+            margin-top: 150px;
             height: calc(100vh - 150px);
+            transition: margin-top 0.3s cubic-bezier(.4,0,.2,1);
+        }
+        body.tabs-hidden .main-content {
+            margin-top: 110px;
+            height: calc(100vh - 110px);
         }
 
         .editor-container {
@@ -458,16 +480,20 @@
         /* Sidebar */
         .sidebar {
             position: fixed;
-            top: 150px; /* Adjusted to be below header (60px) + tabs (40px) + toolbar (50px) */
+            top: 150px;
             right: -350px;
             width: 350px;
-            height: calc(100vh - 150px); /* Adjusted height to match the new top value */
+            height: calc(100vh - 150px);
             background: var(--bg-secondary);
             border-left: 1px solid var(--border-color);
-            transition: right 0.3s ease;
+            transition: top 0.3s cubic-bezier(.4,0,.2,1), height 0.3s cubic-bezier(.4,0,.2,1);
             z-index: 998;
             display: flex;
             flex-direction: column;
+        }
+        body.tabs-hidden .sidebar {
+            top: 110px;
+            height: calc(100vh - 110px);
         }
 
         .sidebar.open {
@@ -847,6 +873,81 @@
             pointer-events: none;
             border-radius: 8px;
         }
+
+        /* Code Block Styles for Editor (New) */
+        .editor pre {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            white-space: pre-wrap; /* Preserve whitespace and wrap long lines */
+            word-wrap: break-word; /* Break long words */
+        }
+
+        .editor code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.9em; /* Slightly smaller font for code */
+            color: var(--text-color);
+            background-color: transparent; /* Code inside pre shouldn't have its own background */
+        }
+
+        .document-tab.dragging {
+            opacity: 0.5;
+        }
+        .document-tab.drag-over {
+            border: 2px dashed var(--primary-color);
+        }
+        .move-tab-up, .move-tab-down {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 2px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 2px 4px;
+        }
+        .move-tab-up[disabled], .move-tab-down[disabled] {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .move-tab-up:hover:not([disabled]), .move-tab-down:hover:not([disabled]) {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        .document-tabs.collapsed {
+            display: none !important;
+        }
+        .document-tabs .document-tab {
+            display: inline-flex;
+            transition: opacity 0.2s;
+        }
+        .document-tabs.collapsed .document-tab {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            padding: 0;
+            margin: 0;
+        }
+        .toggle-tabs-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 6px 10px;
+            margin-right: 8px;
+            transition: background 0.2s;
+            margin-left: auto;
+        }
+        .toggle-tabs-btn:hover {
+            background: var(--hover-color);
+        }
     </style>
 </head>
 <body>
@@ -873,6 +974,9 @@
             <button class="add-document-btn" onclick="addDocument()">
                 <i class="fas fa-plus"></i> New Document
             </button>
+            <button class="toolbar-btn tooltip" id="toggleTabsBtn" onclick="toggleTabsBar()" data-tooltip="Hide Tabs" title="Hide Tabs" style="margin-left:auto;">
+                <i class="fas fa-angle-up" id="toggleTabsIcon"></i>
+            </button>
         </div>
 
         <!-- Toolbar -->
@@ -887,28 +991,32 @@
             </div>
             
             <div class="toolbar-group">
-                <select class="toolbar-select" onchange="changeFontFamily(this.value)">
-                    <option value="Inter">Inter</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Helvetica">Helvetica</option>
-                    <option value="Georgia">Georgia</option>
-                </select>
-                <i class="fas fa-chevron-down" style="position: absolute; right: 8px; pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+                <div style="position: relative; display: inline-block;">
+                    <select class="toolbar-select" onchange="changeFontFamily(this.value)">
+                        <option value="Inter">Inter</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+                </div>
             </div>
             
             <div class="toolbar-group">
-                <select class="toolbar-select" onchange="changeFontSize(this.value)">
-                    <option value="12">12</option>
-                    <option value="14">14</option>
-                    <option value="16" selected>16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="24">24</option>
-                    <option value="28">28</option>
-                    <option value="32">32</option>
-                </select>
-                <i class="fas fa-chevron-down" style="position: absolute; right: 8px; pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+                <div style="position: relative; display: inline-block;">
+                    <select class="toolbar-select" onchange="changeFontSize(this.value)">
+                        <option value="12">12</option>
+                        <option value="14">14</option>
+                        <option value="16" selected>16</option>
+                        <option value="18">18</option>
+                        <option value="20">20</option>
+                        <option value="24">24</option>
+                        <option value="28">28</option>
+                        <option value="32">32</option>
+                    </select>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-color); font-size: 10px;"></i>
+                </div>
             </div>
             
             <div class="toolbar-group">
@@ -960,6 +1068,9 @@
                 <button class="toolbar-btn tooltip" data-tooltip="Insert Table" onclick="insertTable()">
                     <i class="fas fa-table"></i>
                 </button>
+                <button class="toolbar-btn tooltip" data-tooltip="Code Block" onclick="insertCodeBlock()">
+                    <i class="fas fa-code"></i>
+                </button>
             </div>
             
             <div class="toolbar-group">
@@ -977,6 +1088,9 @@
                 </button>
                 <button class="toolbar-btn tooltip" data-tooltip="Export Word" onclick="exportDocument('docx')">
                     <i class="fas fa-file-word"></i>
+                </button>
+                <button class="toolbar-btn tooltip" id="toggleTabsBtn" onclick="toggleTabsBar()" data-tooltip="Hide Tabs">
+                    <i class="fas fa-angle-up" id="toggleTabsIcon"></i>
                 </button>
             </div>
         </div>
@@ -1080,6 +1194,7 @@
         let notes = []; // Global notes array, ensure it's declared once
         let editor; // Declare editor globally here
         let savedSelection; // New: To store the current selection range
+        let draggedTabId = null;
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
@@ -1191,6 +1306,56 @@
             }
         }
 
+        function insertCodeBlock() {
+            const editor = document.getElementById('editor');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+
+                let codeBlockContent;
+                if (selectedText) {
+                    // If text is selected, wrap it
+                    codeBlockContent = `<pre><code>${selectedText}</code></pre><p>&nbsp;</p>`; // Added a paragraph for easier typing after
+                } else {
+                    // If no text is selected, insert empty code block and place cursor inside
+                    codeBlockContent = `<pre><code></code></pre><p>&nbsp;</p>`;
+                }
+                
+                // Create a temporary element to hold the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = codeBlockContent;
+                
+                // Use DOM manipulation to insert content
+                range.deleteContents(); // Delete existing selected content
+                range.insertNode(tempDiv);
+                
+                // Place cursor inside the code block if it was empty
+                if (!selectedText) {
+                    const newRange = document.createRange();
+                    const newSelection = window.getSelection();
+                    const codeElement = tempDiv.querySelector('code');
+                    if (codeElement) {
+                        newRange.setStart(codeElement, 0); // Place cursor at the beginning of the <code> tag
+                        newRange.collapse(true);
+                    } else {
+                        // Fallback: place at the end of the inserted content
+                        newRange.selectNodeContents(tempDiv);
+                        newRange.collapse(false);
+                    }
+                    newSelection.removeAllRanges();
+                    newSelection.addRange(newRange);
+                }
+
+                editor.focus();
+                updateStats();
+                saveState();
+            } else {
+                alert('Please select text to convert to a code block.');
+            }
+        }
+
         function insertTable() {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
@@ -1236,26 +1401,57 @@
         // Renamed handlePaste to handleEditorPaste for clarity and consistency
         function handleEditorPaste(event) {
             event.preventDefault();
-            const pastedText = (event.clipboardData || window.clipboardData).getData('text/plain');
-            const pastedHtml = (event.clipboardData || window.clipboardData).getData('text/html');
-            
-            // Regex to check for a URL (simple check)
-            const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/i;
+            const clipboardData = event.clipboardData || window.clipboardData;
+            let pastedHtml = clipboardData.getData('text/html');
+            let pastedText = clipboardData.getData('text/plain');
 
-            if (pastedText && urlRegex.test(pastedText)) {
-                const linkTitle = prompt('Enter title for the link (optional):', pastedText);
-                if (linkTitle) {
-                    document.execCommand('insertHTML', false, `<a href="${pastedText}">${linkTitle}</a>`);
-                } else {
-                    document.execCommand('insertHTML', false, pastedText); // Insert as plain text if no title
-                }
-            } else if (pastedHtml) {
-                document.execCommand('insertHTML', false, pastedHtml);
+            // If HTML exists, sanitize it
+            if (pastedHtml) {
+                // Create a temp element to parse HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = pastedHtml;
+
+                // Remove all style/background/font tags and attributes
+                tempDiv.querySelectorAll('*').forEach(el => {
+                    el.removeAttribute('style');
+                    el.removeAttribute('class');
+                    el.removeAttribute('color');
+                    el.removeAttribute('face');
+                    el.removeAttribute('bgcolor');
+                    el.removeAttribute('align');
+                    // Remove Google Docs/Word/ChatGPT specific formatting
+                    if (el.tagName === 'FONT' || el.tagName === 'SPAN' || el.tagName === 'DIV') {
+                        if (
+                            el.style.backgroundColor ||
+                            el.style.background ||
+                            el.style.fontFamily ||
+                            el.style.fontSize ||
+                            el.style.color
+                        ) {
+                            el.removeAttribute('style');
+                        }
+                    }
+                });
+
+                // Remove <font>, <style>, <meta>, <o:p>, <script> tags
+                tempDiv.querySelectorAll('font, style, meta, o\\:p, script').forEach(el => el.remove());
+
+                // Remove empty <span> and <div>
+                tempDiv.querySelectorAll('span,div').forEach(el => {
+                    if (!el.textContent.trim()) el.remove();
+                });
+
+                // Remove *** and similar markdown artifacts
+                tempDiv.innerHTML = tempDiv.innerHTML.replace(/\*{2,}/g, '');
+
+                document.execCommand('insertHTML', false, tempDiv.innerHTML);
             } else if (pastedText) {
+                // Remove *** and similar markdown artifacts
+                pastedText = pastedText.replace(/\*{2,}/g, '');
                 document.execCommand('insertHTML', false, pastedText);
             }
             updateStats();
-            saveState(); // Save state after paste
+            saveState();
         }
 
         // New function to handle keydown events, specifically for Enter/Shift+Enter
@@ -1353,11 +1549,10 @@
         }
 
         function deleteNote(id) {
-            if (confirm('Delete this note?')) {
-                notes = notes.filter(n => n.id !== id);
-                renderNotes();
-                saveAppData(); // Save notes after deleting
-            }
+            // Remove confirmation dialog
+            notes = notes.filter(n => n.id !== id);
+            renderNotes();
+            saveAppData(); // Save notes after deleting
         }
 
         function insertNoteContent(id) {
@@ -1814,17 +2009,16 @@
                 alert('Cannot delete the last document.');
                 return;
             }
-            if (confirm('Are you sure you want to delete this document?')) {
-                const deletedDocIndex = documents.findIndex(doc => doc.id === id);
-                documents.splice(deletedDocIndex, 1); // Remove the document
+            // Remove confirmation dialog
+            const deletedDocIndex = documents.findIndex(doc => doc.id === id);
+            documents.splice(deletedDocIndex, 1); // Remove the document
 
-                if (activeDocumentId === id) {
-                    // If deleted document was active, switch to the first available document
-                    switchDocument(documents[0].id);
-                } else {
-                    renderTabs(); // Just re-render if active document wasn't deleted
-                    saveAppData(); // Save data after deleting a document
-                }
+            if (activeDocumentId === id) {
+                // If deleted document was active, switch to the first available document
+                switchDocument(documents[0].id);
+            } else {
+                renderTabs(); // Just re-render if active document wasn't deleted
+                saveAppData(); // Save data after deleting a document
             }
         }
 
@@ -1840,24 +2034,41 @@
 
         function renderTabs() {
             const tabContainer = document.getElementById('documentTabs');
-            // Keep the "New Document" button separate at the end
+            // Keep the "Toggle Tabs" and "New Document" buttons
+            const toggleTabsBtn = tabContainer.querySelector('.toggle-tabs-btn');
             const newDocumentButton = tabContainer.querySelector('.add-document-btn');
             tabContainer.innerHTML = ''; // Clear existing tabs
 
-            documents.forEach(doc => {
+            if (toggleTabsBtn) tabContainer.appendChild(toggleTabsBtn);
+            documents.forEach((doc, idx) => {
                 const tab = document.createElement('div');
                 tab.className = `document-tab ${doc.id === activeDocumentId ? 'active' : ''}`;
                 tab.setAttribute('data-doc-id', doc.id);
+                tab.setAttribute('draggable', 'true'); // Make tab draggable
+
                 tab.innerHTML = `
                     <span>${doc.title}</span>
+                    <button class="move-tab-up" title="Move Up" ${idx === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); moveTab('${doc.id}', -1)">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="move-tab-down" title="Move Down" ${idx === documents.length - 1 ? 'disabled' : ''} onclick="event.stopPropagation(); moveTab('${doc.id}', 1)">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
                     <button class="close-tab" onclick="event.stopPropagation(); deleteDocument('${doc.id}')">
                         <i class="fas fa-times"></i>
                     </button>
                 `;
                 tab.onclick = () => switchDocument(doc.id);
+
+                // Drag events
+                tab.addEventListener('dragstart', handleTabDragStart);
+                tab.addEventListener('dragover', handleTabDragOver);
+                tab.addEventListener('drop', handleTabDrop);
+                tab.addEventListener('dragend', handleTabDragEnd);
+
                 tabContainer.appendChild(tab);
             });
-            tabContainer.appendChild(newDocumentButton); // Add button back
+            if (newDocumentButton) tabContainer.appendChild(newDocumentButton);
         }
 
         // Initialize app
@@ -2027,6 +2238,73 @@
                 cancelNoteEdit();
             }
         });
+
+        function moveTab(docId, direction) {
+            const idx = documents.findIndex(doc => doc.id === docId);
+            if (idx < 0) return;
+            const newIdx = idx + direction;
+            if (newIdx < 0 || newIdx >= documents.length) return;
+            // Swap
+            [documents[idx], documents[newIdx]] = [documents[newIdx], documents[idx]];
+            renderTabs();
+            saveAppData();
+        }
+
+        function handleTabDragStart(e) {
+            draggedTabId = this.getAttribute('data-doc-id');
+            e.dataTransfer.effectAllowed = 'move';
+            this.classList.add('dragging');
+        }
+
+        function handleTabDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        }
+
+        function handleTabDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const targetTabId = this.getAttribute('data-doc-id');
+            if (draggedTabId && draggedTabId !== targetTabId) {
+                const fromIdx = documents.findIndex(doc => doc.id === draggedTabId);
+                const toIdx = documents.findIndex(doc => doc.id === targetTabId);
+                if (fromIdx >= 0 && toIdx >= 0) {
+                    const [movedDoc] = documents.splice(fromIdx, 1);
+                    documents.splice(toIdx, 0, movedDoc);
+                    renderTabs();
+                    saveAppData();
+                }
+            }
+            draggedTabId = null;
+        }
+
+        function handleTabDragEnd(e) {
+            this.classList.remove('dragging');
+            const tabs = document.querySelectorAll('.document-tab');
+            tabs.forEach(tab => tab.classList.remove('drag-over'));
+            draggedTabId = null;
+        }
+
+        function toggleTabsBar() {
+            const tabsBar = document.getElementById('documentTabs');
+            const icon = document.getElementById('toggleTabsIcon');
+            const btn = document.getElementById('toggleTabsBtn');
+            tabsBar.classList.toggle('collapsed');
+            if (tabsBar.classList.contains('collapsed')) {
+                document.body.classList.add('tabs-hidden'); // <--- Add this line
+                icon.classList.remove('fa-angle-up');
+                icon.classList.add('fa-angle-down');
+                btn.title = "Show Tabs";
+                btn.setAttribute('data-tooltip', "Show Tabs");
+            } else {
+                document.body.classList.remove('tabs-hidden'); // <--- Add this line
+                icon.classList.remove('fa-angle-down');
+                icon.classList.add('fa-angle-up');
+                btn.title = "Hide Tabs";
+                btn.setAttribute('data-tooltip', "Hide Tabs");
+            }
+        }
     </script>
 </body>
 </html>
